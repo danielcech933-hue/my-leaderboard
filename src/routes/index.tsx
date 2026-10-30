@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Trophy, Lock, Unlock, Trash2, Plus, TrendingUp } from "lucide-react";
+import { Crown, Lock, Unlock, Trash2, Plus, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -27,6 +27,7 @@ const ADMIN_PIN = "1234";
 const KEY = "broker-leaderboard-v1";
 const czk = (n: number) =>
   new Intl.NumberFormat("cs-CZ", { style: "currency", currency: "CZK", maximumFractionDigits: 0 }).format(n);
+const initials = (n: string) => n.split(" ").map((x) => x[0]).join("").slice(0, 2).toUpperCase();
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 function inPeriod(date: string, p: Period) {
@@ -143,7 +144,7 @@ function Index() {
         {ranking.length > 3 && (
           <section className="mt-6 space-y-2">
             {ranking.slice(3).map((r, i) => {
-              const pct = ranking[0].total > 0 ? Math.max(0, (r.total / ranking[0].total) * 100) : 0;
+              const pct = (ranking[0]?.total ?? 0) > 0 ? Math.max(0, (r.total / ranking[0]!.total) * 100) : 0;
               return (
                 <div key={r.id} className="relative overflow-hidden rounded-xl border border-border bg-card p-4">
                   <div className="absolute inset-y-0 left-0 bg-primary/10" style={{ width: `${pct}%` }} />
