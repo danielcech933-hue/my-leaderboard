@@ -80,30 +80,48 @@ function Index() {
       className="min-h-screen bg-background font-sans text-foreground"
       style={{ backgroundImage: "radial-gradient(ellipse at top, color-mix(in oklab, var(--primary) 18%, transparent), transparent 60%), radial-gradient(ellipse at bottom right, color-mix(in oklab, var(--gold) 10%, transparent), transparent 50%)" }}
     >
-      <div className="mx-auto max-w-5xl px-4 py-10">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-primary">Prodejní žebříček</p>
-            <h1 className="font-display text-4xl font-extrabold md:text-5xl">Makléři roku</h1>
+      <section className="relative overflow-hidden border-b border-border">
+        <img src={hero} alt="Noční panorama města" width={1920} height={800} className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/60 to-background" />
+        <div className="relative mx-auto max-w-6xl px-4">
+          <nav className="flex items-center justify-between py-5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-bronze font-display text-lg font-extrabold text-primary-foreground">M</div>
+              <span className="font-display text-xl font-extrabold tracking-tight">MEGA <span className="text-gold">MAKLÉŘI</span></span>
+            </div>
+            <span className="hidden items-center gap-2 rounded-full border border-gold/40 bg-background/40 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-gold backdrop-blur sm:flex">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-primary" /> Živý žebříček
+            </span>
+          </nav>
+          <div className="pb-16 pt-10 md:pb-24 md:pt-16">
+            <p className="text-sm font-bold uppercase tracking-[0.3em] text-primary">Kdo vydělal nejvíc</p>
+            <h1 className="mt-3 max-w-3xl font-display text-5xl font-extrabold leading-[1.05] md:text-7xl">
+              Elita realitního <span className="bg-gradient-to-r from-gold to-bronze bg-clip-text text-transparent">byznysu</span>
+            </h1>
+            <p className="mt-4 max-w-xl text-lg text-muted-foreground">Provize, obchody a sláva. Jen ti nejlepší se dostanou na stupně vítězů.</p>
+            <div className="mt-8 inline-flex gap-1 rounded-xl border border-border bg-background/60 p-1 backdrop-blur">
+              {(["month", "quarter", "year", "all"] as Period[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${period === p ? "bg-gold text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  {{ month: "Měsíc", quarter: "Kvartál", year: "Rok", all: "Celkem" }[p]}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-1 rounded-lg bg-secondary p-1">
-            {(["month", "quarter", "year", "all"] as Period[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`rounded-md px-3 py-1.5 text-sm font-semibold ${period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-              >
-                {{ month: "Měsíc", quarter: "Kvartál", year: "Rok", all: "Celkem" }[p]}
-              </button>
-            ))}
-          </div>
-        </header>
+        </div>
+      </section>
 
-        <section className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mx-auto max-w-6xl px-4 pb-16">
+        <section className="-mt-10 grid gap-4 sm:grid-cols-3">
           <Stat label="Provize týmu" value={czk(teamTotal)} />
           <Stat label="Největší obchod" value={czk(biggest)} />
           <Stat label="Počet makléřů" value={String(brokers.length)} />
         </section>
+
+        <h2 className="mt-16 text-center font-display text-3xl font-extrabold md:text-4xl">Stupně vítězů</h2>
 
         {ranking.length === 0 && (
           <p className="mt-8 rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
