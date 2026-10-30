@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import hero from "@/assets/hero.jpg";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Crown, Lock, Unlock, Trash2, Plus, TrendingUp } from "lucide-react";
