@@ -142,3 +142,33 @@
     color: var(--color-foreground);
   }
 }
+
+:root {
+  --background: oklch(0.15 0.015 165);
+  --foreground: oklch(0.96 0.01 160);
+  --card: oklch(0.2 0.02 165);
+  --card-foreground: oklch(0.96 0.01 160);
+  --popover: oklch(0.2 0.02 165);
+  --popover-foreground: oklch(0.96 0.01 160);
+  --primary: oklch(0.72 0.16 160);
+  --primary-foreground: oklch(0.15 0.02 165);
+  --secondary: oklch(0.26 0.02 165);
+  --secondary-foreground: oklch(0.96 0.01 160);
+  --muted: oklch(0.24 0.02 165);
+  --muted-foreground: oklch(0.68 0.03 160);
+  --accent: oklch(0.8 0.14 85);
+  --accent-foreground: oklch(0.15 0.02 165);
+  --border: oklch(0.3 0.02 165);
+  --input: oklch(0.3 0.02 165);
+  --ring: oklch(0.72 0.16 160);
+  --gold: oklch(0.82 0.15 85);
+  --silver: oklch(0.82 0.01 250);
+  --bronze: oklch(0.68 0.12 55);
+}
+@theme inline {
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
+  --font-display: "Fraunces", serif;
+  --font-sans: "Manrope", sans-serif;
+}
