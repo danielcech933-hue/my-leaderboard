@@ -197,7 +197,7 @@ function AdminPanel(props: {
       <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" onSubmit={(e) => {
         e.preventDefault();
         const n = Number(amount);
-        if (!brokerId || !n) return toast.error("Vyber makléře a zadej částku");
+        if (!brokerId || !n) { toast.error("Vyber makléře a zadej částku"); return; }
         setDeals((d) => [{ id: uid(), brokerId, amount: n, note, date }, ...d]);
         setAmount(""); setNote(""); toast.success("Zapsáno");
       }}>
