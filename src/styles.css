@@ -172,3 +172,4 @@
   --font-display: "Fraunces", serif;
   --font-sans: "Manrope", sans-serif;
 }
+@source inline("border-gold border-silver border-bronze text-gold text-silver text-bronze");

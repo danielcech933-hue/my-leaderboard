@@ -73,10 +73,12 @@ function Index() {
 
   const teamTotal = ranking.reduce((s, r) => s + r.total, 0);
   const biggest = deals.filter((d) => inPeriod(d.date, period)).reduce((m, d) => Math.max(m, d.amount), 0);
-  const medal = ["text-gold", "text-silver", "text-bronze"];
 
   return (
-    <main className="min-h-screen bg-background font-sans text-foreground">
+    <main
+      className="min-h-screen bg-background font-sans text-foreground"
+      style={{ backgroundImage: "radial-gradient(ellipse at top, color-mix(in oklab, var(--primary) 18%, transparent), transparent 60%), radial-gradient(ellipse at bottom right, color-mix(in oklab, var(--gold) 10%, transparent), transparent 50%)" }}
+    >
       <div className="mx-auto max-w-5xl px-4 py-10">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -102,31 +104,63 @@ function Index() {
           <Stat label="Počet makléřů" value={String(brokers.length)} />
         </section>
 
-        <section className="mt-8 space-y-3">
-          {ranking.length === 0 && (
-            <p className="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">
-              Zatím tu nikdo není. Odemkni správu a přidej makléře.
-            </p>
-          )}
-          {ranking.map((r, i) => (
-            <div
-              key={r.id}
-              className={`flex items-center gap-4 rounded-xl border border-border bg-card p-4 ${i === 0 ? "ring-2 ring-gold" : ""}`}
-            >
-              <div className={`w-10 text-center font-display text-2xl font-extrabold ${medal[i] ?? "text-muted-foreground"}`}>
-                {i < 3 ? <Trophy className="mx-auto h-7 w-7" /> : i + 1}
-              </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary font-bold text-primary">
-                {r.name.split(" ").map((x) => x[0]).join("").slice(0, 2)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{r.name}</p>
-                <p className="text-sm text-muted-foreground">{r.branch || "—"} · {r.count} obchodů</p>
-              </div>
-              <p className="font-display text-xl font-extrabold text-primary md:text-2xl">{czk(r.total)}</p>
-            </div>
-          ))}
-        </section>
+        {ranking.length === 0 && (
+          <p className="mt-8 rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
+            Zatím tu nikdo není. Odemkni správu a přidej makléře.
+          </p>
+        )}
+
+        {ranking.length > 0 && (
+          <section className="mt-12 grid grid-cols-3 items-end gap-3 md:gap-6">
+            {[1, 0, 2].map((idx) => {
+              const r = ranking[idx];
+              if (!r) return <div key={idx} />;
+              const h = ["h-48 md:h-60", "h-36 md:h-44", "h-28 md:h-32"][idx];
+              const color = ["gold", "silver", "bronze"][idx];
+              return (
+                <div key={r.id} className="flex flex-col items-center text-center">
+                  {idx === 0 && <Crown className="mb-1 h-8 w-8 animate-bounce text-gold" />}
+                  <div
+                    className={`flex h-16 w-16 items-center justify-center rounded-full border-4 bg-card font-display text-xl font-extrabold md:h-20 md:w-20 md:text-2xl border-${color} text-${color}`}
+                    style={{ boxShadow: `0 0 40px -6px var(--${color})` }}
+                  >
+                    {initials(r.name)}
+                  </div>
+                  <p className="mt-2 w-full truncate font-semibold">{r.name}</p>
+                  <p className={`font-display text-lg font-extrabold md:text-2xl text-${color}`}>{czk(r.total)}</p>
+                  <div
+                    className={`mt-3 flex w-full items-start justify-center rounded-t-2xl pt-3 ${h}`}
+                    style={{ background: `linear-gradient(to bottom, color-mix(in oklab, var(--${color}) 45%, transparent), color-mix(in oklab, var(--${color}) 5%, transparent))` }}
+                  >
+                    <span className="font-display text-4xl font-extrabold text-foreground/80 md:text-6xl">{idx + 1}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        )}
+
+        {ranking.length > 3 && (
+          <section className="mt-6 space-y-2">
+            {ranking.slice(3).map((r, i) => {
+              const pct = ranking[0].total > 0 ? Math.max(0, (r.total / ranking[0].total) * 100) : 0;
+              return (
+                <div key={r.id} className="relative overflow-hidden rounded-xl border border-border bg-card p-4">
+                  <div className="absolute inset-y-0 left-0 bg-primary/10" style={{ width: `${pct}%` }} />
+                  <div className="relative flex items-center gap-4">
+                    <span className="w-8 text-center font-display text-xl font-extrabold text-muted-foreground">{i + 4}</span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary font-bold text-primary">{initials(r.name)}</div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{r.name}</p>
+                      <p className="text-sm text-muted-foreground">{r.branch || "—"} · {r.count} obchodů</p>
+                    </div>
+                    <p className="font-display text-lg font-extrabold text-primary md:text-xl">{czk(r.total)}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        )}
 
         <section className="mt-12 rounded-xl border border-border bg-card p-6">
           {!admin ? (
