@@ -8,13 +8,19 @@ bun install
 bun run dev
 ```
 
-## Bezplatný online multiplayer
-- Místnosti používají PeerJS Cloud na `0.peerjs.com` pro navázání signalizace.
-- Herní komunikace pak probíhá přímo mezi prohlížeči přes WebRTC data channels (šifrování DTLS poskytuje prohlížeč).
-- Není potřeba Lovable kredit, Supabase projekt, API klíč ani vlastní placený server.
-- Hostitel vytváří místnost a musí zůstat online po celou hru; po zavření jeho stránky místnost zanikne.
-- PeerJS Cloud je sdílený bezplatný signalizační server. Dostupnost a síťové podmínky nejsou garantované; některé NAT/firewall sítě mohou vyžadovat TURN relay.
-- Jde o neformální kvíz, ne bezpečnostně odolnou soutěž: správné odpovědi jsou součástí klientské aplikace a technicky zdatný hráč je může z kódu získat.
+## Multiplayer přes Supabase
+- Lobby a stav hry jsou uložené v Supabase Postgres databázi; živé aktualizace používají Supabase Realtime Broadcast.
+- Prohlížeč používá oficiální Supabase JavaScript SDK v připnuté verzi 2.119.2, načítané z jsDelivr CDN. Není nutné instalovat další npm balíček.
+- V repozitáři není žádný Supabase service-role ani secret key. Frontend používá pouze publishable key; databázové RPC funkce ověřují náhodný token hráče a ukládají pouze jeho SHA-256 hash.
+- Tabulky `mm_rooms` a `mm_room_players` mají zapnuté RLS a přímý přístup klientů je zamítnutý. Pro herní operace slouží kontrolované RPC funkce.
+- Každý hráč dostává vlastní realtime snapshot. Odpovědi ostatních hráčů zůstávají skryté až do odhalení kola.
+- Hostitel musí zůstat online po celou hru; po ukončení hostitelské stránky hra přestane přijímat nové aktualizace.
+- Místnosti mají expiraci 6 hodin. Přístupové tokeny zůstávají v lokálním úložišti prohlížeče.
+- Realtime používá veřejné topic kanály s náhodnými token-derived názvy; klientské RPC navíc ověřují nezávislý token. Nejde o systém pro turnaje s finančními cenami ani proti technicky zdatnému cheatování: správné odpovědi jsou součástí klientského kvízu.
+
+## Databázové migrace
+- `supabase/migrations/20261126153717_market_millionaire_supabase_multiplayer.sql`
+- `supabase/migrations/20261126153852_harden_market_millionaire_room_access_and_leave.sql`
 
 ## Herní pravidla
 - 15 otázek z české všeobecné znalostní banky, bez opakování v rámci jedné hry.
