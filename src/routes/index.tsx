@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, BarChart3, Check, ChevronRight, CircleHelp, Copy, Crown, Lightbulb, LockKeyhole, Medal, RefreshCw, Shield, Sparkles, Timer, TrendingUp, Users, X } from "lucide-react";
