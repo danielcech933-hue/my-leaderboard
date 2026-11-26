@@ -57,10 +57,8 @@ export function loadPeerJS(): Promise<PeerConstructor> {
   return peerScriptPromise;
 }
 
+// Do not specify host/key: this selects the official free PeerJS Cloud service.
+// Overriding the host bypasses PeerJS Cloud's automatic default configuration.
 export const PEER_OPTIONS = {
-  host: "0.peerjs.com",
-  port: 443,
-  path: "/",
-  secure: true,
-  debug: 1,
+  debug: 2,
 };
