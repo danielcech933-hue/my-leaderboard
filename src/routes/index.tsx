@@ -4,9 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, BarChart3, Check, ChevronRight, CircleHelp, Copy, Crown, Lightbulb, LockKeyhole, Medal, RefreshCw, Shield, Sparkles, Timer, TrendingUp, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { QUESTIONS, type Question } from "@/lib/questions";
-import { supabase } from "@/integrations/supabase/client";
-import type { RealtimeChannel } from "@supabase/supabase-js";
-import type { Json } from "@/integrations/supabase/types";
+import { getSupabaseClient, type RealtimeChannelLike, type SupabaseClientLike } from "@/lib/supabase";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "MARKET MILLIONAIRE — The Knowledge Exchange" }, { name: "description", content: "Vědomostní investiční show pro 2–9 hráčů." }] }),
@@ -88,7 +86,8 @@ function MarketMillionaire() {
   const playerIdRef = useRef("");
   const playerTokenRef = useRef("");
   const roomCodeRef = useRef("");
-  const channelRef = useRef<RealtimeChannel|null>(null);
+  const channelRef = useRef<RealtimeChannelLike|null>(null);
+  const supabaseRef = useRef<SupabaseClientLike|null>(null);
   const hostRef = useRef(false);
   const hostUpdateQueueRef = useRef<Promise<void>>(Promise.resolve());
   const hostRevisionRef = useRef(0);
@@ -114,7 +113,7 @@ function MarketMillionaire() {
   function closeRealtime(){
     const channel=channelRef.current;
     channelRef.current=null;
-    if(channel)void supabase.removeChannel(channel);
+    if(channel&&supabaseRef.current)void supabaseRef.current.removeChannel(channel);
     hostRef.current=false;
   }
   function resetLocalRoom(message?:string){
@@ -132,9 +131,11 @@ function MarketMillionaire() {
     setConnectionLabel(hostRef.current?"HOST ONLINE":"SUPABASE ONLINE");
   }
   async function subscribeRoomChannel(code:string,token:string){
+    const client=await getSupabaseClient();
+    supabaseRef.current=client;
     const tokenHash=await hashPlayerToken(token);
     const topic=\`mm:\${code}:\${tokenHash}\`;
-    const channel=supabase.channel(topic,{config:{broadcast:{ack:true}}});
+    const channel=client.channel(topic,{config:{broadcast:{ack:true}}});
     channel
       .on("broadcast",{event:"state"},(raw:unknown)=>{
         const message=readBroadcast(raw);
@@ -169,7 +170,7 @@ function MarketMillionaire() {
         }
       });
     }).catch(async error=>{
-      await supabase.removeChannel(channel);
+      await client.removeChannel(channel);
       throw error;
     });
     return channel;
@@ -180,11 +181,13 @@ function MarketMillionaire() {
     roomRef.current=normalized;setRoom(normalized);
     const revision=++hostRevisionRef.current;
     const queued=hostUpdateQueueRef.current.catch(()=>{}).then(async()=>{
-      const {data,error}=await supabase.rpc("mm_host_update_room",{
+      const client=await getSupabaseClient();
+      supabaseRef.current=client;
+      const {data,error}=await client.rpc("mm_host_update_room",{
         p_code:normalized.code,
         p_player_id:"host",
         p_token:playerTokenRef.current,
-        p_room:normalized as unknown as Json,
+        p_room:normalized as unknown as Record<string,unknown>,
       });
       if(error){
         if(revision===hostRevisionRef.current)toast.error(\`Uložení hry do Supabase selhalo: \${error.message}\`);
@@ -207,11 +210,13 @@ function MarketMillionaire() {
     const current=roomRef.current;
     const token=playerTokenRef.current;
     if(!current||!token){toast.error("Chybí spojení s místností. Připoj se znovu.");return;}
-    const {error}=await supabase.rpc("mm_submit_action",{
+    const client=await getSupabaseClient();
+    supabaseRef.current=client;
+    const {error}=await client.rpc("mm_submit_action",{
       p_code:current.code,
       p_player_id:playerIdRef.current,
       p_token:token,
-      p_action:message as unknown as Json,
+      p_action:message as unknown as Record<string,unknown>,
     });
     if(error)toast.error(error.message||"Akci se nepodařilo odeslat hostiteli.");
   }
@@ -257,6 +262,8 @@ function MarketMillionaire() {
     closeRealtime();playerTokenRef.current="";
     const name=nickname.trim();
     try{
+      const client=await getSupabaseClient();
+      supabaseRef.current=client;
       let created=false;
       for(let attempt=0;attempt<4&&!created;attempt++){
         const code=makeRoomCode();
@@ -268,11 +275,11 @@ function MarketMillionaire() {
           players:[{id:"host",peerId:"supabase",name,score:0,level:-1,correct:0,elapsed:0,online:true,lifelines:[],secondReady:false,secondRetryUsed:false}],
           round:0,state:"lobby",questionIds:chooseQuestions(),answers:{},times:{},deadline:0,revealAt:null,answeredCount:0,
         };
-        const {data,error}=await supabase.rpc("mm_create_room",{
-          p_code:code,p_player_id:"host",p_token:token,p_name:name,p_room:initialRoom as unknown as Json,
+        const {data,error}=await client.rpc("mm_create_room",{
+          p_code:code,p_player_id:"host",p_token:token,p_name:name,p_room:initialRoom as unknown as Record<string,unknown>,
         });
         if(error){
-          await supabase.removeChannel(channel);
+          await client.removeChannel(channel);
           if(error.code==="23505"&&attempt<3)continue;
           throw new Error(error.message||"Místnost se nepodařilo vytvořit v Supabase.");
         }
@@ -302,12 +309,14 @@ function MarketMillionaire() {
     setConnecting(true);setConnectionLabel("PŘIPOJUJI DO LOBBY");
     closeRealtime();
     try{
+      const client=await getSupabaseClient();
+      supabaseRef.current=client;
       const playerId=localStorage.getItem(playerIdKey(code))||crypto.randomUUID();
       const token=localStorage.getItem(playerTokenKey(code))||makePlayerToken();
       roomCodeRef.current=code;playerIdRef.current=playerId;playerTokenRef.current=token;hostRef.current=false;
       const channel=await subscribeRoomChannel(code,token);
       channelRef.current=channel;
-      const {data,error}=await supabase.rpc("mm_join_room",{
+      const {data,error}=await client.rpc("mm_join_room",{
         p_code:code,p_player_id:playerId,p_token:token,p_name:nickname.trim(),
       });
       if(error)throw new Error(error.message||"Do lobby se nepodařilo připojit.");
@@ -391,7 +400,9 @@ function MarketMillionaire() {
     const current=roomRef.current;
     const token=playerTokenRef.current;
     if(current&&token){
-      const {error}=await supabase.rpc("mm_leave_room",{
+      const client=await getSupabaseClient();
+      supabaseRef.current=client;
+      const {error}=await client.rpc("mm_leave_room",{
         p_code:current.code,p_player_id:playerIdRef.current,p_token:token,
       });
       if(error)toast.error(`Místnost se nepodařilo bezpečně opustit: ${error.message}`);
@@ -406,7 +417,7 @@ function MarketMillionaire() {
     }
   },[now,room?.state,room?.deadline,room?.revealAt,isHost]);
 
-  useEffect(()=>()=>{const channel=channelRef.current;if(channel)void supabase.removeChannel(channel);},[]);
+  useEffect(()=>()=>{const channel=channelRef.current;if(channel&&supabaseRef.current)void supabaseRef.current.removeChannel(channel);},[]);
 
   return <main className="market-shell min-h-screen text-slate-100">
     <div className="ticker"><div className="ticker-track">{[...ticker,...ticker].map(([n,v,c],i)=><span key={i} className="ticker-item"><b>{n}</b><span>{v}</span><em className={c.startsWith("−")?"down":"up"}>{c}</em></span>)}</div></div>
