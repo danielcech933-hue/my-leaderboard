@@ -64,6 +64,7 @@ function loadSdk(): Promise<void> {
     };
     const onError = () => {
       cleanup();
+      script?.remove();
       reject(
         new Error(
           "Nepodařilo se načíst Supabase SDK. Zkontroluj připojení k internetu a zkus obnovit stránku.",
