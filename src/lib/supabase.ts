@@ -6,9 +6,7 @@ export interface RealtimeChannelLike {
     filter: { event: string },
     callback: (payload: unknown) => void,
   ): RealtimeChannelLike;
-  subscribe(
-    callback?: (status: string, error?: { message?: string }) => void,
-  ): RealtimeChannelLike;
+  subscribe(callback?: (status: string, error?: { message?: string }) => void): RealtimeChannelLike;
 }
 
 export interface SupabaseClientLike {
@@ -46,9 +44,7 @@ function loadSdk(): Promise<void> {
   }
   if (window.supabase?.createClient) return Promise.resolve();
   return new Promise((resolve, reject) => {
-    let script = document.getElementById(
-      SUPABASE_SCRIPT_ID,
-    ) as HTMLScriptElement | null;
+    let script = document.getElementById(SUPABASE_SCRIPT_ID) as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement("script");
       script.id = SUPABASE_SCRIPT_ID;
