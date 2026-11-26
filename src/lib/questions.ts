@@ -578,7 +578,7 @@ export const QUESTIONS: Question[] = [
   {
     "id": 42,
     "category": "historie",
-    "question": "Kdo byl britskou královnou během většiny druhé světové války?",
+    "question": "Kdo nastoupil na britský trůn v roce 1952?",
     "options": [
       "Viktorie",
       "Alžběta II.",
@@ -1544,7 +1544,7 @@ export const QUESTIONS: Question[] = [
   {
     "id": 111,
     "category": "sport",
-    "question": "Který turnaj tvoří s Wimbledonem tenisovou grandslamovou čtveřici?",
+    "question": "Který grandslamový tenisový turnaj se koná v New Yorku?",
     "options": [
       "Davis Cup",
       "US Open",
@@ -1572,7 +1572,7 @@ export const QUESTIONS: Question[] = [
   {
     "id": 113,
     "category": "sport",
-    "question": "Který atletický běh se běží na 110 metrů s překážkami v mužské kategorii?",
+    "question": "Jak se nazývá atletická disciplína na 110 metrů, při níž běžci překonávají překážky?",
     "options": [
       "Sprint",
       "Překážkový běh",
@@ -1754,7 +1754,7 @@ export const QUESTIONS: Question[] = [
   {
     "id": 126,
     "category": "příroda",
-    "question": "Jak se nazývá proces, při kterém živočichové ukládají energii do zimního spánku?",
+    "question": "Jak se nazývá dlouhodobý zimní spánek některých savců?",
     "options": [
       "Migrace",
       "Hibernace",
