@@ -31,7 +31,7 @@ declare global {
 }
 
 const SUPABASE_URL = "https://ntzjirsejfvgvuhmbqvt.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_h6OPgk8kd5c1wvqLlQ02g_VdQ9Vjw1";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_h6OPGkq8kd5c1wvqLlQ02g_VdQ9Vjw1";
 const SUPABASE_SDK_URL =
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js";
 const SUPABASE_SCRIPT_ID = "market-millionaire-supabase-sdk";
