@@ -122,10 +122,6 @@ function MarketMillionaire() {
     hostRef.current=false;
   }
 
-  function findPlayerIdByPeer(peerId:string,source:Room){
-    return source.players.find(p=>p.peerId===peerId)?.id;
-  }
-
   function handleHostCommand(senderId:string,message:WireMessage,connection?:PeerDataConnection){
     const current=roomRef.current;
     if(!current||!hostRef.current||current.state!=="question"&&message.type!=="lifeline")return;
