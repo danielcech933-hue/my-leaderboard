@@ -88,6 +88,7 @@ function MarketMillionaire() {
   useEffect(()=>{const t=window.setInterval(()=>setNow(Date.now()),250);return()=>window.clearInterval(t);},[]);
   useEffect(()=>{const code=new URLSearchParams(window.location.search).get("room");if(code)setJoinCode(code.toUpperCase());},[]);
   useEffect(()=>{roomRef.current=room;},[room]);
+  useEffect(()=>{setFifty([]);setShowHint(false);setRetryPrompt(false);},[room?.round]);
 
   function sendRoomToConnection(conn:PeerDataConnection,next:Room,recipientId:string){
     if(!conn.open)return;
@@ -124,7 +125,7 @@ function MarketMillionaire() {
 
   function handleHostCommand(senderId:string,message:WireMessage,connection?:PeerDataConnection){
     const current=roomRef.current;
-    if(!current||!hostRef.current||current.state!=="question"&&message.type!=="lifeline")return;
+    if(!current||!hostRef.current||current.state!=="question"||Date.now()>=current.deadline)return;
     const player=current.players.find(p=>p.id===senderId);
     if(!player)return;
     if(message.type==="lifeline"){
@@ -141,15 +142,14 @@ function MarketMillionaire() {
     if(current.answers[senderId]!==undefined)return;
     const question=QUESTIONS.find(q=>q.id===current.questionIds[current.round]);
     if(!question)return;
-    const updatedPlayers=current.players.map(p=>{
-      if(p.id!==senderId)return p;
-      if(p.secondReady&&message.answer!==question.answer&&!p.secondRetryUsed){
-        if(connection?.open)connection.send({type:"retry"} satisfies WireMessage);
-        else setRetryPrompt(true);
-        return {...p,secondRetryUsed:true};
-      }
-      return {...p,secondReady:false,secondRetryUsed:false};
-    });
+    if(player.secondReady&&message.answer!==question.answer&&!player.secondRetryUsed){
+      if(connection?.open)connection.send({type:"retry"} satisfies WireMessage);
+      else setRetryPrompt(true);
+      const updatedPlayers=current.players.map(p=>p.id===senderId?{...p,secondRetryUsed:true}:p);
+      commitHostRoom({...current,players:updatedPlayers,revealAt:null});
+      return;
+    }
+    const updatedPlayers=current.players.map(p=>p.id===senderId?{...p,secondReady:false,secondRetryUsed:false}:p);
     const updatedAnswers={...current.answers,[senderId]:message.answer};
     const updatedTimes={...current.times,[senderId]:Math.max(0,20000-Math.max(0,current.deadline-Date.now()))};
     const allAnswered=Object.keys(updatedAnswers).length>=current.players.length;
@@ -163,7 +163,7 @@ function MarketMillionaire() {
       if(msg.type==="join"){
         const current=roomRef.current;
         if(!current||!hostRef.current)return;
-        if(!msg.playerId||!msg.name||msg.name.trim().length<1)return;
+        if(!msg.playerId||msg.playerId==="host"||msg.playerId.length>128||!msg.name||msg.name.trim().length<1){conn.send({type:"error",message:"Neplatná identita hráče nebo přezdívka."} satisfies WireMessage);conn.close();return;}
         const existing=current.players.find(p=>p.id===msg.playerId);
         if(!existing&&current.players.length>=9){
           conn.send({type:"error",message:"Místnost je plná (maximálně 9 hráčů)."} satisfies WireMessage);
@@ -180,6 +180,12 @@ function MarketMillionaire() {
           conn.send({type:"error",message:"Tato přezdívka už v místnosti je."} satisfies WireMessage);
           conn.close();
           return;
+        }
+        if(existing?.peerId&&existing.peerId!==peerId){
+          const oldConnection=connectionsRef.current.get(existing.peerId);
+          connectionPlayersRef.current.delete(existing.peerId);
+          connectionsRef.current.delete(existing.peerId);
+          oldConnection?.close();
         }
         const newPlayers=existing
           ?current.players.map(p=>p.id===msg.playerId?{...p,peerId,online:true,name:msg.name.trim()}:p)
@@ -198,7 +204,8 @@ function MarketMillionaire() {
       const token=connectionPlayersRef.current.get(peerId);
       connectionPlayersRef.current.delete(peerId);
       const current=roomRef.current;
-      if(token&&current&&hostRef.current){
+      const stillConnected=token&&[...connectionPlayersRef.current.values()].includes(token);
+      if(token&&current&&hostRef.current&&!stillConnected){
         const next={...current,players:current.players.map(p=>p.id===token?{...p,online:false}:p)};
         commitHostRoom(next);
       }
@@ -338,10 +345,20 @@ function MarketMillionaire() {
     const next:Room={...current,players:nextPlayers,answers:{},times:{},state:nextRound>=15?"finished":"question",round:Math.min(14,nextRound),deadline:nextRound>=15?0:Date.now()+20000,revealAt:null};
     commitHostRoom(next);setFifty([]);setShowHint(false);setRetryPrompt(false);
   }
-  function copyRoomLink(){
+  async function copyRoomLink(){
     if(!room)return;
     const url=new URL(window.location.href);url.searchParams.set("room",room.code);
-    navigator.clipboard?.writeText(url.toString()).then(()=>toast.success("Odkaz na místnost zkopírován.")).catch(()=>toast.error("Kopírování se nepodařilo."));
+    try{
+      if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(url.toString());
+      else{
+        const field=document.createElement("textarea");
+        field.value=url.toString();field.style.position="fixed";field.style.opacity="0";
+        document.body.appendChild(field);field.select();
+        const copied=document.execCommand("copy");field.remove();
+        if(!copied)throw new Error("Kopírování není dostupné.");
+      }
+      toast.success("Odkaz na místnost zkopírován.");
+    }catch{toast.error("Kopírování se nepodařilo. Zkopíruj kód místnosti ručně.");}
   }
   function leaveRoom(){
     closePeer();roomRef.current=null;setRoom(null);setView("home");setPlayerId("");setRetryPrompt(false);setFifty([]);setShowHint(false);sessionStorage.removeItem(sessionStorageKey);setConnectionLabel("PŘIPRAVENO");
@@ -388,14 +405,14 @@ function MarketMillionaire() {
     </section>}
 
     {view==="game"&&room&&currentQuestion&&<section className="game-layout">
-      {room.state==="finished"?<div className="finish-card terminal-card"><div className="champion-crown"><Crown size={42}/></div><div className="section-kicker">MARKET CLOSED / FINÁLNÍ VÝSLEDKY</div><h1>Burza je <span>uzavřena.</span></h1><p>Vítězem dnešního obchodování se stává</p><div className="winner-name">{ranked[0]?.name}</div><div className="winner-prize">{fmt(ranked[0]?.score||0)} <small>KREDITŮ</small></div><div className="final-ranking">{ranked.map((p,i)=><div className="rank-row" key={p.id}><b>#{i+1}</b><span>{p.name}</span><strong>{fmt(p.score)}</strong><small>{p.correct}/15 SPRÁVNĚ</small></div>)}</div>{isHost&&<button className="secondary-action" onClick={leaveRoom}>NOVÁ HRA</button>}</div>:<><div className="game-topline"><div className="section-kicker"><span className="live-dot"/> LIVE TRADING SESSION</div><div className="round-chip">KOLO <b>{room.round+1}</b> / 15</div></div>
+      {room.state==="finished"?<div className="finish-card terminal-card"><div className="champion-crown"><Crown size={42}/></div><div className="section-kicker">MARKET CLOSED / FINÁLNÍ VÝSLEDKY</div><h1>Burza je <span>uzavřena.</span></h1><p>Vítězem dnešního obchodování se stává</p><div className="winner-name">{ranked[0]?.name}</div><div className="winner-prize">{fmt(ranked[0]?.score||0)} <small>KREDITŮ</small></div><div className="final-ranking">{ranked.map((p,i)=><div className="rank-row" key={p.id}><b>#{i+1}</b><span>{p.name}</span><strong>{fmt(p.score)}</strong><small>{p.correct}/15 SPRÁVNĚ</small></div>)}</div>{isHost&&<button className="secondary-action" onClick={leaveRoom}>NOVÁ HRA</button>}</div>:<><div className="game-topline"><div className="section-kicker"><span className="live-dot"/> LIVE TRADING SESSION</div><div className="game-topline-actions"><div className="round-chip">KOLO <b>{room.round+1}</b> / 15</div><button className="secondary-action exit-game-action" onClick={leaveRoom}><X size={14}/> ODEJÍT</button></div></div>
         <div className="game-grid"><div className="question-column">
           <div className="question-meta"><span>{currentQuestion.category.toUpperCase()} / MARKET INTELLIGENCE</span><span>LEVEL {room.round+1}</span></div>
           <div className="question-card terminal-card"><div className="question-index">Q{String(room.round+1).padStart(2,"0")} <span>—</span> INVESTIČNÍ ROZHODNUTÍ</div><h2>{currentQuestion.question}</h2>
             <div className="answer-grid">{currentQuestion.options.map((option,i)=>{const removed=fifty.includes(i);const isMine=room.answers[playerId]===i;const reveal=room.state==="reveal";const correct=reveal&&i===currentQuestion.answer;return <button key={i} disabled={answered||removed||room.state!=="question"} className={`answer-option ${isMine?"selected":""} ${correct?"correct":""} ${reveal&&isMine&&!correct?"incorrect":""} ${removed?"removed":""}`} onClick={()=>submitAnswer(i)}><span className="answer-letter">{String.fromCharCode(65+i)}</span><span>{option}</span>{correct&&<Check size={18}/>}</button>;})}</div>
             {showHint&&<div className="hint-box"><Lightbulb size={16}/><span>{currentQuestion.hint||"Zaměř se na souvislosti a vyluč možnosti, které nedávají smysl."}</span></div>}
             {retryPrompt&&<div className="hint-box"><RefreshCw size={16}/><span>První odpověď nebyla správná. Vyber ještě jednou — tento pokus už rozhodne.</span></div>}
-            {room.state==="question"?<div className="answer-status">{answered?<><Check size={15}/> ODPOVĚĎ ODESLÁNA · ČEKÁME NA OSTATNÍ</>:retryPrompt?<>DRUHÝ POKUS — ROZHODNI SE</>:<><Timer size={15}/> TVŮJ ČAS NA ROZHODNUTÍ</>}</div>:<div className="reveal-status">{room.answers[playerId]===currentQuestion.answer?"✓ SPRÁVNÁ ODPOVĚĎ — TVŮJ KURZ ROSTE":"✕ NESPRÁVNÁ ODPOVĚĎ — TRH KORIGUJE"}</div>}
+            {room.state==="question"?<div className="answer-status">{answered?<><Check size={15}/> ODPOVĚĎ ODESLÁNA · ČEKÁME NA OSTATNÍ</>:retryPrompt?<>DRUHÝ POKUS — ROZHODNI SE</>:<><Timer size={15}/> TVŮJ ČAS NA ROZHODNUTÍ</>}</div>:<div className="reveal-status">{room.answers[playerId]===undefined?"ČAS VYPRŠEL — ODPOVĚĎ NEBYLA ODESLÁNA":room.answers[playerId]===currentQuestion.answer?"✓ SPRÁVNÁ ODPOVĚĎ — TVŮJ KURZ ROSTE":"✕ NESPRÁVNÁ ODPOVĚĎ — TRH KORIGUJE"}</div>}
           </div>
           <div className="timer-panel"><div className="timer-label"><span><Activity size={14}/> ČAS DO UZAVŘENÍ KOLA</span><strong className={seconds<=5?"urgent":""}>{room.state==="question"?seconds+"s":"REVEAL"}</strong></div><div className="timer-track"><div className="timer-fill" style={{width:room.state==="question"?progress+"%":"0%"}}/></div></div>
           <div className="lifelines"><span className="field-label">INVESTIČNÍ NÁSTROJE</span><div className="lifeline-row"><button disabled={me?.lifelines.includes("fifty")||answered||room.state!=="question"} onClick={()=>activateLifeline("fifty")}><span>½</span><b>50:50</b><small>VYŘADIT 2</small></button><button disabled={me?.lifelines.includes("hint")||answered||room.state!=="question"} onClick={()=>activateLifeline("hint")}><Lightbulb/><b>NÁPOVĚDA</b><small>TRŽNÍ SIGNÁL</small></button><button disabled={me?.lifelines.includes("second")||answered||room.state!=="question"} onClick={()=>activateLifeline("second")}><RefreshCw/><b>DRUHÁ ŠANCE</b><small>JEDNOU ZA HRU</small></button></div></div>
