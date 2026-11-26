@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export type Question = { id:number; category:string; question:string; options:string[]; answer:number; difficulty:number; hint?:string };
 export const QUESTIONS: Question[] = [
   {
