@@ -70,7 +70,6 @@ function MarketMillionaire() {
   const [connectionLabel,setConnectionLabel] = useState("PŘIPRAVENO");
   const peerRef = useRef<PeerClient|null>(null);
   const roomRef = useRef<Room|null>(null);
-  const playerIdRef = useRef("");
   const hostRef = useRef(false);
   const connectionsRef = useRef<Map<string,PeerDataConnection>>(new Map());
   const connectionPlayersRef = useRef<Map<string,string>>(new Map());
@@ -241,7 +240,7 @@ function MarketMillionaire() {
         players:[{id:"host",peerId:roomPeerId(selectedCode),name:nickname.trim(),score:0,level:-1,correct:0,elapsed:0,online:true,lifelines:[],secondReady:false,secondRetryUsed:false}],
         round:0,state:"lobby",questionIds:chooseQuestions(),answers:{},times:{},deadline:0,revealAt:null,answeredCount:0,
       };
-      playerIdRef.current="host";setPlayerId("host");
+      setPlayerId("host");
       sessionStorage.setItem(sessionStorageKey,JSON.stringify({role:"host",code:selectedCode,playerId:"host",nickname:nickname.trim()}));
       peer.on("connection",(conn:PeerDataConnection)=>attachHostConnection(conn.peer,conn));
       commitHostRoom(room);setView("lobby");setConnectionLabel("HOST ONLINE");
@@ -265,7 +264,7 @@ function MarketMillionaire() {
       const peer=new Peer(undefined,PEER_OPTIONS);peerRef.current=peer;hostRef.current=false;
       const playerId=localStorage.getItem(`mm-player-${code}`)||crypto.randomUUID();
       localStorage.setItem(`mm-player-${code}`,playerId);
-      playerIdRef.current=playerId;setPlayerId(playerId);
+      setPlayerId(playerId);
       sessionStorage.setItem(sessionStorageKey,JSON.stringify({role:"guest",code,playerId,nickname:nickname.trim()}));
       peer.on("error",(error:{message?:string})=>{if(error?.message)toast.error(error.message);});
       peer.on("open",()=>{
@@ -344,7 +343,7 @@ function MarketMillionaire() {
     navigator.clipboard?.writeText(url.toString()).then(()=>toast.success("Odkaz na místnost zkopírován.")).catch(()=>toast.error("Kopírování se nepodařilo."));
   }
   function leaveRoom(){
-    closePeer();roomRef.current=null;setRoom(null);setView("home");setPlayerId("");playerIdRef.current="";setRetryPrompt(false);setFifty([]);setShowHint(false);sessionStorage.removeItem(sessionStorageKey);setConnectionLabel("PŘIPRAVENO");
+    closePeer();roomRef.current=null;setRoom(null);setView("home");setPlayerId("");setRetryPrompt(false);setFifty([]);setShowHint(false);sessionStorage.removeItem(sessionStorageKey);setConnectionLabel("PŘIPRAVENO");
   }
 
   useEffect(()=>{
