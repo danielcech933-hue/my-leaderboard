@@ -260,6 +260,15 @@ function MarketMillionaire() {
   }
   function candidateDestroy(peer:PeerClient|null){try{peer?.destroy();}catch{/* ignore */}}
 
+  function peerErrorMessage(error:{type?:string;message?:string}){
+    if(error.type==="peer-unavailable")return "Místnost nebyla nalezena. Zkontroluj kód a ověř, že hostitel má otevřenou lobby.";
+    if(error.type==="network"||error.type==="socket-error"||error.type==="socket-closed")return "Nepodařilo se spojit se signalizačním serverem. Zkus to znovu nebo vypni VPN/firewall.";
+    if(error.type==="browser-incompatible")return "Tento prohlížeč nepodporuje potřebné WebRTC spojení. Otevři hru v aktuálním Chromu, Firefoxu nebo Edge.";
+    if(error.type==="invalid-key")return "PeerJS odmítl připojení ke cloudovému serveru. Obnov stránku a zkus to znovu.";
+    if(error.type==="webrtc")return "Prohlížeč nedokázal navázat přímé spojení. Zkus jinou síť nebo vypni VPN.";
+    return error.message||"Připojení k místnosti se nezdařilo.";
+  }
+
   async function joinRoom(){
     if(connecting)return;
     if(!nickname.trim()||!joinCode.trim()){toast.error("Vyplň přezdívku i kód místnosti.");return;}
@@ -274,30 +283,58 @@ function MarketMillionaire() {
       localStorage.setItem(`mm-player-${code}`,playerId);
       setPlayerId(playerId);
       sessionStorage.setItem(sessionStorageKey,JSON.stringify({role:"guest",code,playerId,nickname:nickname.trim()}));
-      peer.on("error",(error:{message?:string})=>{if(error?.message)toast.error(error.message);});
-      peer.on("open",()=>{
-        const conn=peer.connect(roomPeerId(code),{reliable:true,serialization:"json"});
-        serverConnectionRef.current=conn;
-        conn.on("open",()=>{
-          conn.send({type:"join",playerId,name:nickname.trim()} satisfies WireMessage);
-          setConnectionLabel("SPOJENO S HOSTITELEM");
+      await new Promise<void>((resolve,reject)=>{
+        let settled=false;
+        const timeout=window.setTimeout(()=>finish(new Error("Vypršel čas připojení. Ověř kód a to, že hostitel stále čeká v lobby.")),18000);
+        const finish=(error?:Error)=>{
+          if(settled)return;
+          settled=true;
+          window.clearTimeout(timeout);
+          if(error)reject(error);else resolve();
+        };
+        peer.on("error",(error:{type?:string;message?:string})=>{
+          const message=peerErrorMessage(error);
+          if(!settled)finish(new Error(message));
+          else if(error.type==="network"||error.type==="disconnected")toast.error(message);
         });
-        conn.on("data",(raw:unknown)=>{
-          const msg=raw as WireMessage;
-          if(msg.type==="state"){
-            roomRef.current=msg.room;setRoom(msg.room);setView(msg.room.state==="lobby"?"lobby":"game");
-            setConnectionLabel("ONLINE");
-          }else if(msg.type==="error"){
-            toast.error(msg.message);closePeer();setConnectionLabel("OFFLINE");
-          }else if(msg.type==="retry"){
-            setRetryPrompt(true);toast.error("První odpověď nebyla správná. Máš ještě jeden pokus!");
-          }
+        peer.on("open",()=>{
+          if(settled)return;
+          const conn=peer.connect(roomPeerId(code),{reliable:true,serialization:"json"});
+          serverConnectionRef.current=conn;
+          conn.on("open",()=>{
+            if(settled)return;
+            conn.send({type:"join",playerId,name:nickname.trim()} satisfies WireMessage);
+            setConnectionLabel("ČEKÁM NA HOSTITELE");
+          });
+          conn.on("data",(raw:unknown)=>{
+            const msg=raw as WireMessage;
+            if(msg.type==="state"){
+              if(msg.room.code!==code||!msg.room.players.some(p=>p.id===playerId)){
+                finish(new Error("Hostitel poslal neplatná data místnosti. Zkus se připojit znovu."));
+                return;
+              }
+              roomRef.current=msg.room;setRoom(msg.room);setView(msg.room.state==="lobby"?"lobby":"game");
+              setConnectionLabel("ONLINE");
+              finish();
+            }else if(msg.type==="error"){
+              finish(new Error(msg.message));
+            }else if(msg.type==="retry"){
+              setRetryPrompt(true);toast.error("První odpověď nebyla správná. Máš ještě jeden pokus!");
+            }
+          });
+          conn.on("error",(error:{message?:string})=>{
+            finish(new Error(error.message||"Datové spojení s hostitelem selhalo."));
+          });
+          conn.on("close",()=>{
+            if(!settled)finish(new Error("Hostitel spojení ukončil nebo místnost už neexistuje."));
+            else{setConnectionLabel("ODPOJENO");toast.error("Spojení s hostitelem se přerušilo.");}
+          });
         });
-        conn.on("close",()=>{setConnectionLabel("ODPOJENO");toast.error("Spojení s hostitelem se přerušilo.");});
-        conn.on("error",()=>{setConnectionLabel("CHYBA SPOJENÍ");toast.error("Nepodařilo se navázat spojení s místností.");});
       });
+      toast.success("Úspěšně ses připojil do lobby.");
     }catch(error){
-      closePeer();setConnectionLabel("OFFLINE");
+      closePeer();setConnectionLabel("OFFLINE");setPlayerId("");setRoom(null);setView("home");
+      sessionStorage.removeItem(sessionStorageKey);
       toast.error(error instanceof Error?error.message:"Připojení se nezdařilo.");
     }finally{setConnecting(false);}
   }
