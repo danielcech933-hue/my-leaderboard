@@ -470,7 +470,7 @@ function MarketMillionaire() {
         </aside></div></>}
     </section>}
 
-    <footer className="market-footer"><span>MARKET MILLIONAIRE © 2026</span><span>PEER-TO-PEER · SIMULATED MARKET DATA</span><span>POWERED BY KNOWLEDGE <Sparkles size={12}/></span></footer>
+    <footer className="market-footer"><span>MARKET MILLIONAIRE © 2026</span><span>SUPABASE REALTIME · SIMULATED MARKET DATA</span><span>POWERED BY KNOWLEDGE <Sparkles size={12}/></span></footer>
     {showRules&&<div className="modal-backdrop" onClick={()=>setShowRules(false)}><div className="terminal-card rules-modal" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setShowRules(false)}><X/></button><div className="section-kicker">HOW TO TRADE KNOWLEDGE</div><h2>Pravidla hry</h2><p>Každý hráč odpovídá na stejných 15 otázek. Na každou otázku máte 20 sekund. Správná odpověď vás posune na další příčku milionové pyramidy.</p><p>Po 5. a 10. otázce se nachází bezpečnostní hranice. Při chybě se vrátíte na poslední dosaženou bezpečnostní hranici.</p><p>Každý trader má tři žolíky: 50:50, nápovědu a druhou šanci. Druhá šance se aktivuje před odpovědí a při špatném prvním pokusu otevře ještě jeden pokus.</p><p>Vítězí hráč s nejvyšším dosaženým výnosem. Všechny kredity jsou pouze herní. Hostitel musí zůstat online po celou dobu hry.</p><button className="primary-action" onClick={()=>setShowRules(false)}>ROZUMÍM <Check size={16}/></button></div></div>}
   </main>;
 }
