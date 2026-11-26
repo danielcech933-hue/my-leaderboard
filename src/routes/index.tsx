@@ -134,7 +134,7 @@ function MarketMillionaire() {
     const client=await getSupabaseClient();
     supabaseRef.current=client;
     const tokenHash=await hashPlayerToken(token);
-    const topic=\`mm:\${code}:\${tokenHash}\`;
+    const topic=`mm:${code}:${tokenHash}`;
     const channel=client.channel(topic,{config:{broadcast:{ack:true}}});
     channel
       .on("broadcast",{event:"state"},(raw:unknown)=>{
@@ -166,7 +166,7 @@ function MarketMillionaire() {
         }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
           settled=true;window.clearTimeout(timeout);
           const detail=error&&"message" in error?String(error.message):"";
-          reject(new Error(\`Supabase Realtime: \${status}.\${detail?" "+detail:""}\`));
+          reject(new Error(`Supabase Realtime: ${status}.${detail?" "+detail:""}`));
         }
       });
     }).catch(async error=>{
@@ -190,7 +190,7 @@ function MarketMillionaire() {
         p_room:normalized as unknown as Record<string,unknown>,
       });
       if(error){
-        if(revision===hostRevisionRef.current)toast.error(\`Uložení hry do Supabase selhalo: \${error.message}\`);
+        if(revision===hostRevisionRef.current)toast.error(`Uložení hry do Supabase selhalo: ${error.message}`);
         return;
       }
       if(revision===hostRevisionRef.current&&data){
