@@ -310,7 +310,7 @@ function MarketMillionaire() {
     if(hostRef.current)handleHostCommand(playerId,msg);
     else sendToHost(msg);
   }
-  function useLifeline(kind:"fifty"|"hint"|"second"){
+  function activateLifeline(kind:"fifty"|"hint"|"second"){
     if(!room||!me||answered||room.state!=="question"||me.lifelines.includes(kind))return;
     if(kind==="fifty"){
       if(!currentQuestion)return;
@@ -398,7 +398,7 @@ function MarketMillionaire() {
             {room.state==="question"?<div className="answer-status">{answered?<><Check size={15}/> ODPOVĚĎ ODESLÁNA · ČEKÁME NA OSTATNÍ</>:retryPrompt?<>DRUHÝ POKUS — ROZHODNI SE</>:<><Timer size={15}/> TVŮJ ČAS NA ROZHODNUTÍ</>}</div>:<div className="reveal-status">{room.answers[playerId]===currentQuestion.answer?"✓ SPRÁVNÁ ODPOVĚĎ — TVŮJ KURZ ROSTE":"✕ NESPRÁVNÁ ODPOVĚĎ — TRH KORIGUJE"}</div>}
           </div>
           <div className="timer-panel"><div className="timer-label"><span><Activity size={14}/> ČAS DO UZAVŘENÍ KOLA</span><strong className={seconds<=5?"urgent":""}>{room.state==="question"?seconds+"s":"REVEAL"}</strong></div><div className="timer-track"><div className="timer-fill" style={{width:room.state==="question"?progress+"%":"0%"}}/></div></div>
-          <div className="lifelines"><span className="field-label">INVESTIČNÍ NÁSTROJE</span><div className="lifeline-row"><button disabled={me?.lifelines.includes("fifty")||answered||room.state!=="question"} onClick={()=>useLifeline("fifty")}><span>½</span><b>50:50</b><small>VYŘADIT 2</small></button><button disabled={me?.lifelines.includes("hint")||answered||room.state!=="question"} onClick={()=>useLifeline("hint")}><Lightbulb/><b>NÁPOVĚDA</b><small>TRŽNÍ SIGNÁL</small></button><button disabled={me?.lifelines.includes("second")||answered||room.state!=="question"} onClick={()=>useLifeline("second")}><RefreshCw/><b>DRUHÁ ŠANCE</b><small>JEDNOU ZA HRU</small></button></div></div>
+          <div className="lifelines"><span className="field-label">INVESTIČNÍ NÁSTROJE</span><div className="lifeline-row"><button disabled={me?.lifelines.includes("fifty")||answered||room.state!=="question"} onClick={()=>activateLifeline("fifty")}><span>½</span><b>50:50</b><small>VYŘADIT 2</small></button><button disabled={me?.lifelines.includes("hint")||answered||room.state!=="question"} onClick={()=>activateLifeline("hint")}><Lightbulb/><b>NÁPOVĚDA</b><small>TRŽNÍ SIGNÁL</small></button><button disabled={me?.lifelines.includes("second")||answered||room.state!=="question"} onClick={()=>activateLifeline("second")}><RefreshCw/><b>DRUHÁ ŠANCE</b><small>JEDNOU ZA HRU</small></button></div></div>
           {room.state==="reveal"&&isHost&&<button className="primary-action next-action" onClick={settleRound}>{room.round===14?"ZOBRAZIT VÝSLEDKY":"DALŠÍ KOLO"} <ChevronRight size={17}/></button>}
         </div>
         <aside className="side-column"><div className="terminal-card ladder-card"><div className="card-top"><span><TrendingUp size={15}/> CESTA K MILIONU</span></div>{PRIZES.map((prize,i)=><div key={i} className={`ladder-row ${i===room.round?"active":""} ${SAFETY.includes(i)?"safe":""} ${i<room.round?"passed":""}`}><span>{String(i+1).padStart(2,"0")}</span><b>{fmt(prize)}</b>{SAFETY.includes(i)&&<LockKeyhole size={12}/>}</div>).reverse()}</div>
