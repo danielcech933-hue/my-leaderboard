@@ -21,6 +21,7 @@ bun run dev
 ## Databázové migrace
 - `supabase/migrations/20261126153717_market_millionaire_supabase_multiplayer.sql`
 - `supabase/migrations/20261126153852_harden_market_millionaire_room_access_and_leave.sql`
+- `supabase/migrations/20261126155026_fix_market_millionaire_jsonb_answer_count.sql`
 
 ## Herní pravidla
 - 15 otázek z české všeobecné znalostní banky, bez opakování v rámci jedné hry.
