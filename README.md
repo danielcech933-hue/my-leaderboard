@@ -1,18 +1,23 @@
 # MARKET MILLIONAIRE — The Knowledge Exchange
 
-Česká vědomostní show ve stylu „Chcete být milionářem“ s burzovním terminálovým vizuálem. Hra podporuje 2–9 hráčů, 15 kol, žolíky a milionovou pyramidu.
+Česká vědomostní show ve stylu „Chcete být milionářem“ s burzovním terminálovým vizuálem. Hra je navržena pro 2–9 hráčů, 15 kol, tři žolíky a milionovou pyramidu.
 
 ## Spuštění
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
-## Multiplayer — důležité
-Aktuální prototyp používá sdílený `localStorage` prostor pro synchronizaci více panelů ve stejném prohlížeči (například více oken na jednom zařízení). Pro skutečné hraní přes internet z různých zařízení je nutné doplnit Lovable Cloud / Supabase Realtime, serverově validované odpovědi a oddělit správné odpovědi od veřejných dat. UI a základní herní tok jsou připraveny pro toto napojení.
+## Bezplatný online multiplayer
+- Místnosti používají PeerJS Cloud na `0.peerjs.com` pro navázání signalizace.
+- Herní komunikace pak probíhá přímo mezi prohlížeči přes WebRTC data channels (šifrování DTLS poskytuje prohlížeč).
+- Není potřeba Lovable kredit, Supabase projekt, API klíč ani vlastní placený server.
+- Hostitel vytváří místnost a musí zůstat online po celou hru; po zavření jeho stránky místnost zanikne.
+- PeerJS Cloud je sdílený bezplatný signalizační server. Dostupnost a síťové podmínky nejsou garantované; některé NAT/firewall sítě mohou vyžadovat TURN relay.
+- Jde o neformální kvíz, ne bezpečnostně odolnou soutěž: správné odpovědi jsou součástí klientské aplikace a technicky zdatný hráč je může z kódu získat.
 
 ## Herní pravidla
-- 15 otázek, 20 sekund na odpověď.
-- Výhry jsou fiktivní herní kredity, nikoli skutečné peníze.
-- Bezpečnostní hranice po 5. a 10. otázce.
+- 15 otázek z české všeobecné znalostní banky, bez opakování v rámci jedné hry.
+- 20 sekund na odpověď, bezpečnostní hranice po 5. a 10. otázce.
 - Žolíky: 50:50, nápověda a druhá šance.
+- Všechny částky jsou fiktivní herní kredity, nikoli skutečné peníze.
