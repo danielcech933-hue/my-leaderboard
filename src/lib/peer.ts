@@ -43,7 +43,10 @@ export function loadPeerJS(): Promise<PeerConstructor> {
     script.crossOrigin = "anonymous";
     script.onload = () => {
       if (window.Peer) resolve(window.Peer);
-      else reject(new Error("Knihovna PeerJS se nenačetla správně."));
+      else {
+        peerScriptPromise = null;
+        reject(new Error("Knihovna PeerJS se nenačetla správně."));
+      }
     };
     script.onerror = () => {
       peerScriptPromise = null;
