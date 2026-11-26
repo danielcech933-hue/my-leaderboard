@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, prettier/prettier */
 export type PeerDataConnection = {
   peer: string;
   open: boolean;
