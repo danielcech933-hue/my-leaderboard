@@ -14,3 +14,6 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 
 .offline-pill{font:9px 'DM Mono';color:#ff8793;border:1px solid rgba(255,99,122,.23);background:rgba(255,99,122,.06);padding:5px 8px;border-radius:5px}.leave-action{margin-top:20px;width:100%}
+
+.game-topline-actions{display:flex;align-items:center;gap:10px}.exit-game-action{height:36px;padding:0 12px;margin:0;font-size:9px;white-space:nowrap}
+@media(max-width:420px){.game-topline-actions{gap:6px}.exit-game-action{height:32px;padding:0 8px;font-size:8px}}
