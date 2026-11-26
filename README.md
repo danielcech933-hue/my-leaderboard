@@ -1,24 +1,18 @@
-# My Leaderboard
+# MARKET MILLIONAIRE — The Knowledge Exchange
 
-chci svůj vlastní leaderboard
+Česká vědomostní show ve stylu „Chcete být milionářem“ s burzovním terminálovým vizuálem. Hra podporuje 2–9 hráčů, 15 kol, žolíky a milionovou pyramidu.
 
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/7abaf886-b772-4070-aeb9-c6b4793340de).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+## Spuštění
+```bash
+npm install
 npm run dev
 ```
+
+## Multiplayer — důležité
+Aktuální prototyp používá sdílený `localStorage` prostor pro synchronizaci více panelů ve stejném prohlížeči (například více oken na jednom zařízení). Pro skutečné hraní přes internet z různých zařízení je nutné doplnit Lovable Cloud / Supabase Realtime, serverově validované odpovědi a oddělit správné odpovědi od veřejných dat. UI a základní herní tok jsou připraveny pro toto napojení.
+
+## Herní pravidla
+- 15 otázek, 20 sekund na odpověď.
+- Výhry jsou fiktivní herní kredity, nikoli skutečné peníze.
+- Bezpečnostní hranice po 5. a 10. otázce.
+- Žolíky: 50:50, nápověda a druhá šance.
